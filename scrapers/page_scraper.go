@@ -6,14 +6,14 @@ import (
 
 // PageScraper scrapes a website and finds all pages.
 type PageScraper struct {
-	Scraper
+	BaseScraper
 	pageURL string
 }
 
 // NewPageScraper initializes a PageScraper.
 func NewPageScraper(siteURL string, pageURL string) *PageScraper {
 	return &PageScraper{
-		Scraper: Scraper{
+		BaseScraper: BaseScraper{
 			siteURL: siteURL,
 			links:   make([]string, 0),
 		},

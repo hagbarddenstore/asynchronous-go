@@ -6,7 +6,7 @@ import (
 
 // AsyncSiteScraper scrapes an entire site asynchronously.
 type AsyncSiteScraper struct {
-	Scraper
+	BaseScraper
 	scrapedURLs []string
 }
 
@@ -19,7 +19,7 @@ func NewAsyncSiteScraper(siteURL string) (*AsyncSiteScraper, error) {
 	}
 
 	scraper := &AsyncSiteScraper{
-		Scraper: Scraper{
+		BaseScraper: BaseScraper{
 			siteURL: siteURL,
 			links:   make([]string, 0),
 		},
@@ -35,8 +35,9 @@ func (s *AsyncSiteScraper) Scrape() error {
 	scrapedURLs := 0
 
 	uniqueLinks := make(chan []string)
+	errors := make(chan error)
 
-	go s.scrapeURL(s.siteURL, uniqueLinks)
+	go s.scrapeURL(s.siteURL, uniqueLinks, errors)
 
 	for {
 		select {
@@ -54,23 +55,31 @@ func (s *AsyncSiteScraper) Scrape() error {
 
 				urlsToScrape++
 
-				go s.scrapeURL(s.prependSiteURL(link), uniqueLinks)
+				go s.scrapeURL(s.prependSiteURL(link), uniqueLinks, errors)
 			}
 
 			if urlsToScrape == scrapedURLs {
 				return nil
 			}
+
+		case err := <-errors:
+			return err
 		}
 	}
 }
 
-func (s *AsyncSiteScraper) scrapeURL(URL string, uniqueLinks chan []string) {
+func (s *AsyncSiteScraper) scrapeURL(
+	URL string,
+	uniqueLinks chan []string,
+	errors chan error) {
 	scraper := NewPageScraper(s.siteURL, URL)
 
 	err := scraper.Scrape()
 
 	if err != nil {
-		// ???
+		errors <- err
+
+		return
 	}
 
 	foundLinks := scraper.UniqueLinks()

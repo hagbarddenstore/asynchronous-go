@@ -18,39 +18,31 @@ func main() {
 
 	var links []string
 
-	if async {
-		scraper, err := scrapers.NewAsyncSiteScraper(siteURL)
+	scraper, err := createScraper()
 
-		if err != nil {
-			panic(err)
-		}
-
-		err = scraper.Scrape()
-
-		if err != nil {
-			panic(err)
-		}
-
-		links = scraper.UniqueLinks()
-	} else {
-		scraper, err := scrapers.NewSyncSiteScraper(siteURL)
-
-		if err != nil {
-			panic(err)
-		}
-
-		err = scraper.Scrape()
-
-		if err != nil {
-			panic(err)
-		}
-
-		links = scraper.UniqueLinks()
+	if err != nil {
+		panic(err)
 	}
+
+	err = scraper.Scrape()
+
+	if err != nil {
+		panic(err)
+	}
+
+	links = scraper.UniqueLinks()
 
 	sitemap := sitemaps.NewSitemap(siteURL, links)
 
 	fmt.Println(sitemap.String())
+}
+
+func createScraper() (scrapers.Scraper, error) {
+	if async {
+		return scrapers.NewAsyncSiteScraper(siteURL)
+	}
+
+	return scrapers.NewSyncSiteScraper(siteURL)
 }
 
 func init() {

@@ -6,7 +6,7 @@ import (
 
 // SyncSiteScraper scrapes an entire site synchronously.
 type SyncSiteScraper struct {
-	Scraper
+	BaseScraper
 	scrapedURLs []string
 }
 
@@ -19,7 +19,7 @@ func NewSyncSiteScraper(siteURL string) (*SyncSiteScraper, error) {
 	}
 
 	scraper := &SyncSiteScraper{
-		Scraper: Scraper{
+		BaseScraper: BaseScraper{
 			siteURL: siteURL,
 			links:   make([]string, 0),
 		},
