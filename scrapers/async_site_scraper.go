@@ -1,7 +1,6 @@
 package scrapers
 
 import (
-	"errors"
 	"strings"
 )
 
@@ -32,7 +31,51 @@ func NewAsyncSiteScraper(siteURL string) (*AsyncSiteScraper, error) {
 
 // Scrape the site for links.
 func (s *AsyncSiteScraper) Scrape() error {
-	return errors.New(`Not implemented yet!`)
+	urlsToScrape := 1
+	scrapedURLs := 0
+
+	uniqueLinks := make(chan []string)
+
+	go s.scrapeURL(s.siteURL, uniqueLinks)
+
+	for {
+		select {
+		case links := <-uniqueLinks:
+			scrapedURLs++
+
+			for _, link := range links {
+				s.links = append(s.links, link)
+
+				if s.urlIsScraped(link) {
+					continue
+				}
+
+				s.scrapedURLs = append(s.scrapedURLs, link)
+
+				urlsToScrape++
+
+				go s.scrapeURL(s.prependSiteURL(link), uniqueLinks)
+			}
+
+			if urlsToScrape == scrapedURLs {
+				return nil
+			}
+		}
+	}
+}
+
+func (s *AsyncSiteScraper) scrapeURL(URL string, uniqueLinks chan []string) {
+	scraper := NewPageScraper(s.siteURL, URL)
+
+	err := scraper.Scrape()
+
+	if err != nil {
+		// ???
+	}
+
+	foundLinks := scraper.UniqueLinks()
+
+	uniqueLinks <- foundLinks
 }
 
 func (s *AsyncSiteScraper) urlIsScraped(URL string) bool {
@@ -51,4 +94,8 @@ func (s *AsyncSiteScraper) prependSiteURL(URL string) string {
 	}
 
 	return URL
+}
+
+type scrapeResult struct {
+	Links []string
 }
